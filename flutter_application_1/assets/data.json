@@ -1,0 +1,36 @@
+{
+  "products": [
+    {
+      "title": "Cheeseburger",
+      "description": "Delicious cheese burger with fresh ingredients",
+      "price": "10.00",
+      "thumbnail": "assets/images/Cheeseburger.png",
+      "rating": "4.8",
+      "time": "25 mins"
+    },
+    {
+      "title": "Veggie Burger",
+      "description": "Healthy veggie burger full of taste",
+      "price": "12.00",
+      "thumbnail": "assets/images/Veggie_burger.png",
+      "rating": "4.5",
+      "time": "30 mins"
+    },
+    {
+      "title": "Hamburger",
+      "description": "Classic hamburger",
+      "price": "9.00",
+      "thumbnail": "assets/images/hambur.png",
+      "rating": "4.5",
+      "time": "32 mins"
+    },
+    {
+      "title": "Chicken Burger",
+      "description": "Crispy chicken burger",
+      "price": "11.00",
+      "thumbnail": "assets/images/Chicken_burger.png",
+      "rating": "4.2",
+      "time": "34 mins"
+    }
+  ]
+}

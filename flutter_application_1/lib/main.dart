@@ -1,27 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
+import 'dart:io' as dart_io;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'data_provider.dart'; // Import do DataProvider
+import 'Pages/menu_page.dart';
+import 'Pages/burger_detail_page.dart';
+import 'Pages/orders_page.dart';
+import 'Pages/checkout_page.dart';
+import 'Pages/checkout_form_page.dart';
+import 'Pages/delivery_map_page.dart';
+import 'Pages/profile_page.dart';
+import 'Pages/favorites_page.dart';
+import 'Pages/payment_methods_page.dart';
+import 'Pages/addresses_page.dart';
+import 'Pages/help_support_page.dart';
+import 'Pages/cart_page.dart';
+import 'basededados.dart';
+import 'servidor.dart';
+import 'package:path_provider/path_provider.dart';
 
 // Configuração do GoRouter
 final _router = GoRouter(
   routes: [
+    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+    GoRoute(path: '/homepage', builder: (context, state) => const HomePage()),
+    GoRoute(path: '/menupage', builder: (context, state) => const MenuPage()),
     GoRoute(
-      path: '/',
-      builder: (context, state) => const SplashScreen(),
+      path: '/burgerdetail',
+      builder: (context, state) {
+        final product = state.extra as Map<String, dynamic>?;
+        return BurgerDetailPage(product: product);
+      },
+    ),
+    GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
+    GoRoute(path: '/orders', builder: (context, state) => const OrdersPage()),
+    GoRoute(
+      path: '/checkout',
+      builder: (context, state) => const CheckoutPage(),
     ),
     GoRoute(
-      path: '/homepage',
-      builder: (context, state) => const HomePage(),
+      path: '/checkoutform',
+      builder: (context, state) => const CheckoutFormPage(),
     ),
     GoRoute(
-      path: '/menupage',
-      builder: (context, state) => const MenuPage(),
+      path: '/delivery',
+      builder: (context, state) => const DeliveryMapPage(),
+    ),
+    GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
+    GoRoute(
+      path: '/favorites',
+      builder: (context, state) => const FavoritesPage(),
+    ),
+    GoRoute(
+      path: '/payment',
+      builder: (context, state) => const PaymentMethodsPage(),
+    ),
+    GoRoute(
+      path: '/addresses',
+      builder: (context, state) => const AddressesPage(),
+    ),
+    GoRoute(
+      path: '/help',
+      builder: (context, state) => const HelpSupportPage(),
     ),
   ],
 );
 
 void main() {
+  // Inicialização necessária para sqflite no Desktop (Windows/Linux)
+  if (!kIsWeb &&
+      (dart_io.Platform.isWindows ||
+          dart_io.Platform.isLinux ||
+          dart_io.Platform.isMacOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   runApp(const MyApp());
 }
 
@@ -30,7 +86,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Uso do MaterialApp.router com a configuração do GoRouter
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
@@ -48,20 +103,40 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   String _timeString = '';
   // Variável para armazenar a referência do Timer
-  late Timer _timer; 
+  late Timer _timer;
 
   @override
   void initState() {
     super.initState();
     _updateTime();
+    _initDataAndSync();
+  }
+
+  Future<void> _initDataAndSync() async {
+    // Inicializa Banco de Dados e Sincroniza APENAS SE NÃO FOR WEB
+    if (kIsWeb) return;
+
+    try {
+      final bd = Basededados();
+      final directory = await getApplicationDocumentsDirectory();
+
+      // Use 'local' para forçar o uso de assets/data.json se não tiver API real
+      final servidor = Servidor(url: 'local', bd: bd, appPath: directory.path);
+
+      await servidor.descarregaInsbd();
+    } catch (e) {
+      print('Erro na inicialização: $e');
+    }
   }
 
   void _updateTime() {
     final now = DateTime.now();
-    setState(() {
-      _timeString =
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    });
+    if (mounted) {
+      setState(() {
+        _timeString =
+            '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      });
+    }
 
     // Armazena a referência do Timer para que possa ser cancelado
     final int secondsToNextMinute = 60 - now.second;
@@ -71,7 +146,7 @@ class _SplashScreenState extends State<SplashScreen> {
   // **CORREÇÃO DO ERRO:** Implementação do dispose para cancelar o Timer
   @override
   void dispose() {
-    _timer.cancel(); // <--- Resolve o setState() called after dispose()
+    _timer.cancel();
     super.dispose();
   }
 
@@ -80,10 +155,8 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fundo amarelo
           Container(color: const Color(0xFFFEBC2F)),
 
-          // Hambúrguer de cima à direita
           Positioned(
             top: 20,
             right: -23,
@@ -93,7 +166,6 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
-          // Hambúrguer de baixo à esquerda
           Positioned(
             bottom: 30,
             left: -20,
@@ -103,7 +175,6 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
-          // Logotipo central
           Center(child: Image.asset('assets/images/logotipo.png', width: 300)),
 
           Positioned(
@@ -115,15 +186,15 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    '9:41',
-                    style: TextStyle(
+                  Text(
+                    _timeString.isEmpty ? '9:41' : _timeString,
+                    style: const TextStyle(
                       color: Colors.black,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // Ícones de Status (Sinal e Bateria)
+
                   Row(
                     children: const [
                       Icon(Icons.wifi, color: Colors.black, size: 21),
@@ -141,7 +212,6 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
-          // Botão na parte inferior
           Positioned(
             bottom: -30,
             left: 0,
@@ -154,8 +224,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   height: 7,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Usando context.push para ir para a HomePage e permitir o retorno
-                      context.push('/homepage');
+                      context.go('/homepage');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
@@ -193,32 +262,35 @@ class _HomePageState extends State<HomePage> {
     {'name': 'Ham', 'image': 'assets/images/hambur.png'},
   ];
 
-  final List<Map<String, String>> burgers = [
-    {
-      'name': 'Cheeseburger',
-      'image': 'assets/images/cheeseburger.png',
-      'rating': '4.8',
-      'time': '25 mins',
-    },
-    {
-      'name': 'Veggie Burger',
-      'image': 'assets/images/veggie_burger.png',
-      'rating': '4.5',
-      'time': '30 mins',
-    },
-    {
-      'name': 'Hamburger',
-      'image': 'assets/images/hambur.png',
-      'rating': '4.5',
-      'time': '32 mins',
-    },
-    {
-      'name': 'Chicken Burger',
-      'image': 'assets/images/chicken_burger.png',
-      'rating': '4.2',
-      'time': '34 mins',
-    },
-  ];
+  Future<List<Map<String, dynamic>>>? _burgersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _burgersFuture = DataProvider().getProducts();
+  }
+
+  Widget _buildProductImage(String path) {
+    if (path.startsWith('assets/')) {
+      return Image.asset(
+        path,
+        height: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.broken_image, size: 50),
+      );
+    } else {
+      return Image.file(
+        dart_io.File(
+          path,
+        ), // Precisamos importar dart:io como dart_io ou usar apenas File se não houver conflito
+        height: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.broken_image, size: 50),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -232,22 +304,19 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top bar (ajustado para incluir o botão de voltar)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      // **NOVO: Botão de Voltar para a SplashScreen**
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-                        onPressed: () {
-                          // Retorna para a página anterior (SplashScreen)
-                          context.pop(); 
-                        },
+                        icon: const Icon(
+                          Icons.arrow_back_ios,
+                          color: Colors.black,
+                        ),
+                        onPressed: () {},
                       ),
-                      
-                      const SizedBox(width: 10), // Espaçamento
 
-                      // Container que contém o texto de localização e o ícone de notificação
+                      const SizedBox(width: 10),
+
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -265,7 +334,10 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
-                            const Icon(Icons.notifications_none, color: Colors.black),
+                            const Icon(
+                              Icons.notifications_none,
+                              color: Colors.black,
+                            ),
                           ],
                         ),
                       ),
@@ -384,85 +456,106 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(height: 10),
 
-                  // Burger Grid
-                  GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisExtent: 230,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
-                    itemCount: burgers.length,
-                    itemBuilder: (context, index) {
-                      final burger = burgers[index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
+                  // Burger Grid (FutureBuilder)
+                  FutureBuilder<List<Map<String, dynamic>>>(
+                    future: _burgersFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text("Erro: ${snapshot.error}"));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Text("Sem produtos encontrados"),
+                        );
+                      }
+
+                      final burgers = snapshot.data!;
+
+                      return GridView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisExtent: 230,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(15),
-                              ),
-                              child: Image.asset(
-                                burger['image']!,
-                                height: 120,
-                                fit: BoxFit.cover,
-                              ),
+                        itemCount: burgers.length,
+                        itemBuilder: (context, index) {
+                          final burger = burgers[index];
+                          // Adaptando nomes dos campos do BD
+                          final name = burger['title'] ?? 'Sem Nome';
+                          final imagePath = burger['caminhoFicheiro'] ?? '';
+                          final rating = burger['rating'] ?? '0.0';
+                          final time = burger['time'] ?? '--';
+
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    burger['name']!,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(15),
                                   ),
-                                  const SizedBox(height: 7),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  child: _buildProductImage(imagePath),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
                                     children: [
-                                      const Icon(
-                                        Icons.star,
-                                        size: 18,
-                                        color: Colors.orange,
-                                      ),
                                       Text(
-                                        '${burger['rating']} • ${burger['time']}',
+                                        name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 7),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.star,
+                                            size: 18,
+                                            color: Colors.orange,
+                                          ),
+                                          Text('$rating • $time'),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: const [
+                                          Icon(
+                                            Icons.favorite_border,
+                                            color: Colors.orange,
+                                            size: 20,
+                                          ),
+                                          SizedBox(width: 10),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(
-                                        Icons.favorite_border,
-                                        color: Colors.orange,
-                                        size: 20,
-                                      ),
-                                      SizedBox(width: 10),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
                   ),
@@ -471,7 +564,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Barra superior (hora, wifi, etc.) - Pode ser ajustada ou removida para melhor design
           Positioned(
             top: 3,
             left: 0,
@@ -526,18 +618,16 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.restaurant, color: Colors.grey),
                 tooltip: 'Menu',
                 onPressed: () {
-                   // Navega para MenuPage
                   context.push('/menupage');
                 },
               ),
-              // Botão preto central (Botão de Menu/Ação Principal)
+
               Center(
                 child: SizedBox(
                   width: 80,
                   height: 5,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Este botão também navega para o MenuPage
                       context.push('/menupage');
                     },
                     style: ElevatedButton.styleFrom(
@@ -562,43 +652,6 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {},
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class MenuPage extends StatefulWidget {
-  const MenuPage({super.key});
-
-  @override
-  State<MenuPage> createState() => _MenuPageState();
-}
-
-class _MenuPageState extends State<MenuPage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Menu'),
-        backgroundColor: Colors.orange,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            // Volta para a página anterior (HomePage)
-            context.pop();
-          },
-        ),
-      ),
-      backgroundColor: Colors.white,
-      body: const Center(
-        child: Text(
-          'MENU PAGE',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 30,
-            color: Colors.black,
           ),
         ),
       ),
