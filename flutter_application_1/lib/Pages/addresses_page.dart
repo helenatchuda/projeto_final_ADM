@@ -109,7 +109,7 @@ class _AddressesPageState extends State<AddressesPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFFFEBC2F),
         onPressed: () {
-          // Navegar para o mapa para ver localização e "adicionar endereço"
+          
           context.push('/delivery');
         },
         child: const Icon(Icons.add_location_alt_outlined, color: Colors.white),

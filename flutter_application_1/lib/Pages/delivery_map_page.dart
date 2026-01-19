@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -11,7 +13,8 @@ class DeliveryMapPage extends StatefulWidget {
 }
 
 class _DeliveryMapPageState extends State<DeliveryMapPage> {
-  late GoogleMapController _mapController;
+  final Completer<GoogleMapController> _mapController =
+      Completer<GoogleMapController>();
 
   // Coordenadas de Viseu (centro do mapa) inicial
   final LatLng _viseuCenter = const LatLng(40.6610, -7.9097);
@@ -161,8 +164,9 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _mapController.animateCamera(
+        onPressed: () async {
+          final GoogleMapController controller = await _mapController.future;
+          controller.animateCamera(
             CameraUpdate.newCameraPosition(
               CameraPosition(target: _viseuCenter, zoom: 16),
             ),

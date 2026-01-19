@@ -5,7 +5,7 @@ import 'dart:io' as dart_io;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'data_provider.dart'; // Import do DataProvider
+import 'data_provider.dart'; 
 import 'Pages/menu_page.dart';
 import 'Pages/burger_detail_page.dart';
 import 'Pages/orders_page.dart';
@@ -87,6 +87,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+      title: 'Fasty Fast Delivery',
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
     );
@@ -113,14 +114,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _initDataAndSync() async {
-    // Inicializa Banco de Dados e Sincroniza APENAS SE NÃO FOR WEB
+    
     if (kIsWeb) return;
 
     try {
       final bd = Basededados();
       final directory = await getApplicationDocumentsDirectory();
 
-      // Use 'local' para forçar o uso de assets/data.json se não tiver API real
+      
       final servidor = Servidor(url: 'local', bd: bd, appPath: directory.path);
 
       await servidor.descarregaInsbd();
@@ -138,12 +139,12 @@ class _SplashScreenState extends State<SplashScreen> {
       });
     }
 
-    // Armazena a referência do Timer para que possa ser cancelado
+    
     final int secondsToNextMinute = 60 - now.second;
     _timer = Timer(Duration(seconds: secondsToNextMinute), _updateTime);
   }
 
-  // **CORREÇÃO DO ERRO:** Implementação do dispose para cancelar o Timer
+  
   @override
   void dispose() {
     _timer.cancel();
@@ -283,7 +284,7 @@ class _HomePageState extends State<HomePage> {
       return Image.file(
         dart_io.File(
           path,
-        ), // Precisamos importar dart:io como dart_io ou usar apenas File se não houver conflito
+        ), 
         height: 120,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) =>
@@ -346,7 +347,7 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(height: 15),
 
-                  // Search bar
+                
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 15,

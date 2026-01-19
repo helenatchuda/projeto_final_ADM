@@ -13,7 +13,7 @@ class BurgerDetailPage extends StatefulWidget {
 
 class _BurgerDetailPageState extends State<BurgerDetailPage> {
   int _quantity = 1;
-  int _selectedSize = 1; // 0: Single, 1: Large, 2: Medium
+  int _selectedSize = 1; 
   final List<bool> _addOns = [false, false, false, false, false];
   final List<String> _addOnNames = [
     'Cheese',
