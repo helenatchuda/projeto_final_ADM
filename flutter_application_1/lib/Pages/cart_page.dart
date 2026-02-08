@@ -31,8 +31,7 @@ class _CartPageState extends State<CartPage> {
 
   double get total {
     return cartItems.fold(0, (sum, item) {
-      // O preço pode vir formatado como string "€8.50" ou double 8.50.
-      // Vamos limpar se for string.
+     
       double price = 0.0;
       var pParam = item['price'];
       if (pParam is num) {

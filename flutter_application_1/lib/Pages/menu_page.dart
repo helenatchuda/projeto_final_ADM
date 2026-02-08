@@ -27,7 +27,7 @@ class _MenuPageState extends State<MenuPage> {
   @override
   void initState() {
     super.initState();
-    // Carrega os produtos do banco de dados ao iniciar
+    // Carrega os produtos do base de dados ao iniciar
     _menuItemsFuture = DataProvider().getProducts();
   }
 
@@ -65,7 +65,6 @@ class _MenuPageState extends State<MenuPage> {
               children: [
                 const SizedBox(height: 10),
 
-                // Status bar (Simulado conforme código antigo)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

@@ -541,7 +541,7 @@ class _OrdersPageState extends State<OrdersPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-          // Se quiser apenas indicador, ou cor diferente, ajuste aqui
+         
         ],
       ),
     );

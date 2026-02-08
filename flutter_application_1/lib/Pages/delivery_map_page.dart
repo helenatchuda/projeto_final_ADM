@@ -34,9 +34,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
     // Teste se os serviços de localização estão ativados.
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Serviços de localização não estão habilitados, não continue
-      // acessando a posição e solicite aos usuários do
-      // App para habilitar os serviços de localização.
+     
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Localização desativada. Por favor ative o GPS.'),

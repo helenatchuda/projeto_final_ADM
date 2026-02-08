@@ -5,7 +5,7 @@ import 'dart:io' as dart_io;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'data_provider.dart'; 
+import 'data_provider.dart';
 import 'Pages/menu_page.dart';
 import 'Pages/burger_detail_page.dart';
 import 'Pages/orders_page.dart';
@@ -114,14 +114,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _initDataAndSync() async {
-    
     if (kIsWeb) return;
 
     try {
       final bd = Basededados();
       final directory = await getApplicationDocumentsDirectory();
 
-      
       final servidor = Servidor(url: 'local', bd: bd, appPath: directory.path);
 
       await servidor.descarregaInsbd();
@@ -139,12 +137,10 @@ class _SplashScreenState extends State<SplashScreen> {
       });
     }
 
-    
     final int secondsToNextMinute = 60 - now.second;
     _timer = Timer(Duration(seconds: secondsToNextMinute), _updateTime);
   }
 
-  
   @override
   void dispose() {
     _timer.cancel();
@@ -282,9 +278,7 @@ class _HomePageState extends State<HomePage> {
       );
     } else {
       return Image.file(
-        dart_io.File(
-          path,
-        ), 
+        dart_io.File(path),
         height: 120,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) =>
@@ -347,7 +341,6 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(height: 15),
 
-                
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 15,
@@ -467,7 +460,7 @@ class _HomePageState extends State<HomePage> {
                         return Center(child: Text("Erro: ${snapshot.error}"));
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(
-                          child: Text("Sem produtos encontrados"),
+                          child: Text(" produtos não encontrados"),
                         );
                       }
 
@@ -486,7 +479,7 @@ class _HomePageState extends State<HomePage> {
                         itemCount: burgers.length,
                         itemBuilder: (context, index) {
                           final burger = burgers[index];
-                          // Adaptando nomes dos campos do BD
+                          // Adaptei nomes dos campos do BD
                           final name = burger['title'] ?? 'Sem Nome';
                           final imagePath = burger['caminhoFicheiro'] ?? '';
                           final rating = burger['rating'] ?? '0.0';
