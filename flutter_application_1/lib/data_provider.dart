@@ -12,7 +12,7 @@ class DataProvider {
   final List<Map<String, dynamic>> _webOrders = [];
   final List<Map<String, dynamic>> _webFavorites = [];
   final Map<String, dynamic> _webProfile = {
-    'nome': 'Helena Dilva',
+    'nome': 'Helena Silva',
     'email': 'helena@example.com',
     'foto': '',
   };
